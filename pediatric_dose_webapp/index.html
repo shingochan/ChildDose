@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>小児用量デモ（年齢・体重 → 10剤）</title>
+<style>html,body{margin:0;padding:0;background:#fff;color:#111;font-family:system-ui,-apple-system,Segoe UI,Roboto,Noto Sans JP,sans-serif}header{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee}.inner{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}h1{font-size:18px;margin:0}main{max-width:1100px;margin:0 auto;padding:16px}.card{border:1px solid #eee;border-radius:10px;padding:14px;margin-bottom:14px;box-shadow:0 1px 0 rgba(0,0,0,0.03)}.inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}label{display:block;font-size:12px;color:#666;margin-bottom:6px}input[type=number]{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:16px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.btn{border:1px solid #ddd;background:#fafafa;border-radius:8px;padding:10px 14px;font-size:14px;cursor:pointer}.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;border:1px solid #ddd;background:#f7f7f7;margin-left:6px}.weight{border-color:#cde;background:#f0fffa}.age{border-color:#efd;background:#fff7f7}.warn{color:#b00;font-weight:600}.table-wrap{overflow:auto;border:1px solid #eee;border-radius:10px}table{border-collapse:collapse;width:100%;min-width:820px}thead th{position:sticky;top:0;background:#f9f9f9;border-bottom:1px solid #eee;text-align:left;padding:10px 8px;font-size:12px;color:#555}td{border-bottom:1px solid #f2f2f2;padding:10px 8px;font-size:14px;vertical-align:top}.footer{font-size:12px;color:#666;margin-top:10px}.pill{padding:2px 8px;border-radius:999px;background:#eef;border:1px solid #dde;font-size:11px}.kicker{font-size:13px;color:#333}</style>
+<script>
+const DRUGS=[{id:"D1",name:"薬A",method:"weight",mgPerKg:10,maxSingleMg:400,dosesPerDay:3,form:{type:"syrup",mgPerMl:20,mgPerTab:null,roundStep:0.5},note:"DEMO"},
+{id:"D2",name:"薬B",method:"weight",mgPerKg:5,maxSingleMg:200,dosesPerDay:2,form:{type:"tablet",mgPerMl:null,mgPerTab:100,roundStep:0.5},note:"DEMO"},
+{id:"D3",name:"薬C",method:"weight",mgPerKg:15,maxSingleMg:600,dosesPerDay:2,form:{type:"syrup",mgPerMl:40,mgPerTab:null,roundStep:0.5},note:"DEMO"},
+{id:"D4",name:"薬D",method:"weight",mgPerKg:20,maxSingleMg:800,dosesPerDay:3,form:{type:"tablet",mgPerMl:null,mgPerTab:250,roundStep:0.5},note:"DEMO"},
+{id:"D5",name:"薬E",method:"weight",mgPerKg:2,maxSingleMg:100,dosesPerDay:1,form:{type:"syrup",mgPerMl:10,mgPerTab:null,roundStep:0.5},note:"DEMO"},
+{id:"D6",name:"薬F",method:"weight",mgPerKg:0.5,maxSingleMg:50,dosesPerDay:1,form:{type:"tablet",mgPerMl:null,mgPerTab:50,roundStep:0.5},note:"DEMO"},
+{id:"D7",name:"薬G",method:"age",bands:[{label:"0-1",min:0,max:1,fixedMg:50,dosesPerDay:3},{label:"1-5",min:1,max:6,fixedMg:100,dosesPerDay:3},{label:"6-11",min:6,max:12,fixedMg:200,dosesPerDay:2},{label:"12+",min:12,max:200,fixedMg:400,dosesPerDay:2}],form:{type:"syrup",mgPerMl:25,mgPerTab:null,roundStep:0.5},note:"DEMO"},
+{id:"D8",name:"薬H",method:"age",bands:[{label:"0-1",min:0,max:1,fixedMg:50,dosesPerDay:3},{label:"1-5",min:1,max:6,fixedMg:100,dosesPerDay:3},{label:"6-11",min:6,max:12,fixedMg:200,dosesPerDay:2},{label:"12+",min:12,max:200,fixedMg:400,dosesPerDay:2}],form:{type:"tablet",mgPerMl:null,mgPerTab:5,roundStep:0.5},note:"DEMO"},
+{id:"D9",name:"薬I",method:"age",bands:[{label:"0-1",min:0,max:1,fixedMg:50,dosesPerDay:3},{label:"1-5",min:1,max:6,fixedMg:100,dosesPerDay:3},{label:"6-11",min:6,max:12,fixedMg:200,dosesPerDay:2},{label:"12+",min:12,max:200,fixedMg:400,dosesPerDay:2}],form:{type:"syrup",mgPerMl:15,mgPerTab:null,roundStep:0.5},note:"DEMO"},
+{id:"D10",name:"薬J",method:"age",bands:[{label:"0-1",min:0,max:1,fixedMg:50,dosesPerDay:3},{label:"1-5",min:1,max:6,fixedMg:100,dosesPerDay:3},{label:"6-11",min:6,max:12,fixedMg:200,dosesPerDay:2},{label:"12+",min:12,max:200,fixedMg:400,dosesPerDay:2}],form:{type:"tablet",mgPerMl:null,mgPerTab:10,roundStep:0.5},note:"DEMO"}];
+function roundToStep(v,s){return Math.round(v/s)*s}
+function compute(d,age,wt){let mg=0,per=1,badge="";if(d.method==="weight"){mg=Math.min((wt||0)*(d.mgPerKg||0),d.maxSingleMg||1e9);per=d.dosesPerDay||1;badge='<span class="badge weight">体重ベース</span>'}else{const b=(d.bands||[]).find(b=>age>=b.min&&age<b.max);if(b){mg=b.fixedMg;per=b.dosesPerDay}badge='<span class="badge age">年齢ベース</span>'}let form="-";if(d.form.mgPerMl){form=roundToStep(mg/(d.form.mgPerMl||1),d.form.roundStep||0.5).toFixed(2)+" mL"}if(d.form.mgPerTab){const tab=roundToStep(mg/(d.form.mgPerTab||1),d.form.roundStep||0.5).toFixed(2)+" 錠";form=(form!=="-"?form+" / ":"")+tab}return {name:d.name,mg:mg.toFixed(1),per,form,note:d.note||"",badge}}
+function render(){const age=parseFloat(document.getElementById("age").value);const wt=parseFloat(document.getElementById("wt").value);const ok=isFinite(age)&&age>=0&&isFinite(wt)&&wt>0;document.getElementById("warn").style.display=ok?"none":"block";const tb=document.querySelector("#out tbody");tb.innerHTML="";const rows=DRUGS.map(d=>compute(d,age||0,wt||0));rows.forEach(r=>{const tr=document.createElement("tr");tr.innerHTML=`<td><div class="kicker">${r.badge}</div><div>${r.name}</div></td><td>${r.mg} mg</td><td>1日 ${r.per} 回</td><td>${r.form}</td><td>${r.note}</td>`;tb.appendChild(tr)});window.__csv=buildCSV(rows,age||"",wt||"")}
+function buildCSV(rows,age,wt){const header=["薬剤名","計算法","単回量_mg","1日回数","表示（mL/錠）","備考"];const body=rows.map(r=>[r.name,r.badge.includes("体重")?"weight":"age",r.mg,r.per,r.form,r.note].join(","));return["年齢(才),"+age+",体重(kg),"+wt,header.join(","),...body].join("\n")}
+function downloadCSV(){const blob=new Blob([window.__csv||""],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");const url=URL.createObjectURL(blob);a.href=url;a.download="pediatric_dose_demo.csv";a.click();URL.revokeObjectURL(url)}
+function copyTable(){const sel=window.getSelection();const range=document.createRange();range.selectNode(document.getElementById("out"));sel.removeAllRanges();sel.addRange(range);document.execCommand("copy");sel.removeAllRanges();alert("表をコピーしました。")}
+window.addEventListener("DOMContentLoaded",()=>{if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{})}document.getElementById("age").addEventListener("input",render);document.getElementById("wt").addEventListener("input",render);render()});
+</script>
+</head>
+<body>
+<header><div class="inner"><h1>小児用量デモ（年齢・体重 → 10剤）</h1><div class="row"><button class="btn" onclick="copyTable()">表をコピー</button><button class="btn" onclick="downloadCSV()">CSVダウンロード</button></div></div></header>
+<main>
+  <div class="card">
+    <div class="inputs">
+      <div><label>年齢（才）</label><input id="age" type="number" step="0.1" min="0" placeholder="例：3.5"/></div>
+      <div><label>体重（kg）</label><input id="wt" type="number" step="0.1" min="0" placeholder="例：14.2"/></div>
+    </div>
+    <div id="warn" class="warn" style="display:none;margin-top:8px">入力が不足しています（年齢・体重を入力してください）。</div>
+    <div class="note" style="margin-top:8px">※デモ値です。実運用には添付文書・施設プロトコルで置換し、確認を行ってください。</div>
+  </div>
+  <div class="card table-wrap" id="out">
+    <table>
+      <thead><tr><th>薬剤</th><th>単回量</th><th>用法</th><th>表示（mL/錠）</th><th>備考</th></tr></thead>
+      <tbody></tbody>
+      <tfoot><tr><td colspan="5" class="footer">年齢と体重を入力すると10剤の単回量（mg）と1日回数、mL/錠数を自動計算。</td></tr></tfoot>
+    </table>
+  </div>
+</main>
+</body>
+</html>
